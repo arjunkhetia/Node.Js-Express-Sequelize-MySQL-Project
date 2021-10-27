@@ -1,4 +1,4 @@
-# Node-Express-MySQL Project   ![Version][version-image]
+# Node-Express-Sequelize-MySQL Project   ![Version][version-image]
 
 ![Linux Build][linuxbuild-image]
 ![Windows Build][windowsbuild-image]
@@ -7,10 +7,10 @@
 ![Dependency Status][dependency-image]
 ![devDependencies Status][devdependency-image]
 
-The quickest way to get start with Node.Js, Express & MySQL, just clone the project:
+The quickest way to get start with Node.Js, Express, Sequelize & MySQL, just clone the project:
 
 ```bash
-$ git clone https://github.com/arjunkhetia/Node.Js-Express-MySQL-Project.git
+$ git clone https://github.com/arjunkhetia/Node.Js-Express-Sequelize-MySQL-Project.git
 ```
 
 Install dependencies:
@@ -133,19 +133,39 @@ var accessLogStream = rfs('file.log', {
 This is a node.js driver for mysql. Also implemented the connection pool, it is a cache of database connections maintained so that the connections can be reused when future requests to the database are required. Connection pools are used to enhance the performance of executing commands on a database.
 
 ```js
-var mysql = require('mysql');
-var pool  = mysql.createPool({
-  connectionLimit : 50, // The maximum number of connections to create at once. (Default: 10)
-  queueLimit: 100, // The maximum number of connection requests the pool will queue before returning an error from getConnection. (Default: 0)
-  host : '127.0.0.1', // The hostname of the database you are connecting to. (Default: localhost)
-  port : 3306, // The port number to connect to. (Default: 3306)
-  user : 'arjun', // The MySQL user to authenticate as.
-  password : '', // The password of that MySQL user.
-  database : 'mysqldb', // Name of the database to use for this connection.
-  connectTimeout : 10000, // The milliseconds before a timeout occurs during the initial connection to the MySQL server. (Default: 10000)
-  waitForConnections: true, // Determines the pool's action when no connections are available and the limit has been reached. (Default: true)
-  acquireTimeout: 10000, // The milliseconds before a timeout occurs during the connection acquisition. (Default: 10000)
-  debug : false // Prints protocol details to stdout. (Default: false)
+const Sequelize = require("sequelize");
+
+const sequelize = new Sequelize({
+  dialect: "mysql", // The dialect of the database you are connecting to. One of mysql, postgres, sqlite and mssql.
+  host: "127.0.0.1", // The hostname of the database you are connecting to. (Default: localhost)
+  port: 3306, // The port number of the relational database to connect to. (Default: 3306)
+  database: "database", // Name of the database to use for this connection.
+  username: "username", // The username which is used to authenticate against the database.
+  password: "password", // The password which is used to authenticate against the database.
+  logging: false, // A function that gets executed every time Sequelize would log something.
+  pool: {
+    max: 10, // Maximum number of connection in pool. (Default: 5)
+    min: 0, // Minimum number of connection in pool. (Default: 0)
+    acquire: 30000, // The maximum time, in milliseconds, that pool will try to get connection before throwing error. (Default: 60000)
+    idle: 10000, // The maximum time, in milliseconds, that a connection can be idle before being released. (Default: 10000)
+    evict: 1000, // The time interval, in milliseconds, after which sequelize-pool will remove idle connections. (Default: 1000)
+  },
+  retry: {
+    match: [ // Only retry a query if the error matches one of these strings.
+      Sequelize.ConnectionError,
+      Sequelize.ConnectionRefusedError,
+      Sequelize.ConnectionTimedOutError,
+      Sequelize.TimeoutError,
+    ],
+    max: 3, // How many times a failing query is automatically retried. Set to 0 to disable retrying on SQL_BUSY error.
+  },
+  define: {
+    hooks: { // An object of global hook functions that are called before and after certain lifecycle events.
+      beforeCreate: (obj) => {
+        console.log('Before Create...', obj);
+      },
+    },
+  },
 });
 ```
 

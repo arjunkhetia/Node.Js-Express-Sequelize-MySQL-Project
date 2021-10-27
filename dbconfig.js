@@ -1,33 +1,50 @@
-var mysql = require('mysql');
+const Sequelize = require("sequelize");
 
-var pool  = mysql.createPool({
-  connectionLimit : 10,
-  queueLimit: 100,
-  host : '127.0.0.1',
-  port : 3306,
-  user : 'arjun',
-  password : '',
-  database : 'mysqldb',
-  connectTimeout : 10000,
-  waitForConnections: true,
-  acquireTimeout: 10000,
-  debug : false
+const sequelize = new Sequelize({
+  dialect: "mysql",
+  host: "127.0.0.1",
+  port: 3306,
+  database: "database",
+  username: "username",
+  password: "password",
+  logging: false,
+  logQueryParameters: true,
+  pool: {
+    max: 10,
+    min: 0,
+    acquire: 30000,
+    idle: 10000,
+    evict: 1000,
+  },
+  retry: {
+    match: [
+      Sequelize.ConnectionError,
+      Sequelize.ConnectionRefusedError,
+      Sequelize.ConnectionTimedOutError,
+      Sequelize.TimeoutError,
+    ],
+    max: 3,
+  },
+  define: {
+    hooks: {
+      beforeCreate: (obj) => {
+        console.log('Before Create...', obj);
+      },
+    },
+  },
 });
 
-pool.on('connection', function (connection) {
-  console.log('MySQL DB Connection established');
+sequelize
+  .authenticate()
+  .then(() => {
+    console.log("MySQL DB Connection established successfully.");
+  })
+  .catch((err) => {
+    console.error("Unable to connect to the database: ", err);
+  });
+
+sequelize.sync({ alter: true }).then(() => {
+  console.log(`Database & tables synchronization done!`);
 });
 
-pool.on('acquire', function (connection) {
-  console.log('Connection %d acquired', connection.threadId);
-});
-
-pool.on('enqueue', function () {
-  console.log('Waiting for available connection slot...');
-});
-
-pool.on('release', function (connection) {
-  console.log('Connection %d released', connection.threadId);
-});
-
-module.exports = pool;
+module.exports = { sequelize, Sequelize };
